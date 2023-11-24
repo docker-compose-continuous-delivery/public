@@ -18,6 +18,11 @@ services:
       - "traefik.http.routers.privatebin.tls.certresolver=cloudflare"
       - "traefik.http.routers.privatebin.service=privatebin"
       - "traefik.http.services.privatebin.loadbalancer.server.port=8080"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   hedgedoc_db:
     image: postgres:13.4-alpine
