@@ -1,7 +1,7 @@
 version: "3.9"
 
 services:
-  nginx-fpm-alpine:
+  privatebin:
     image: privatebin/nginx-fpm-alpine
     container_name: privatebin
     restart: unless-stopped
@@ -22,6 +22,7 @@ services:
   hedgedoc_db:
     image: postgres:13.4-alpine
     restart: unless-stopped
+    container_name: hedgedoc_db
     environment:
       - POSTGRES_USER=hedgedoc
       - POSTGRES_DB=hedgedoc
@@ -42,6 +43,7 @@ services:
   hedgedoc:
     image: quay.io/hedgedoc/hedgedoc:latest
     restart: unless-stopped
+    container_name: hedgedoc
     env_file:
       - .hedgedoc.env
     environment:
