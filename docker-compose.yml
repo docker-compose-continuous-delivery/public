@@ -1,0 +1,69 @@
+version: "3.9"
+
+services:
+  nginx-fpm-alpine:
+    image: privatebin/nginx-fpm-alpine
+    container_name: privatebin
+    restart: unless-stopped
+    read_only: true
+    volumes:
+      - ./privatebin:/srv/data
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.privatebin.rule=Host(`privatebin.${BASE_DOMAIN:-ozeliurs.com}`)"
+      - "traefik.http.routers.privatebin.entrypoints=websecure"
+      - "traefik.http.routers.privatebin.tls=true"
+      - "traefik.http.routers.privatebin.tls.certresolver=cloudflare"
+      - "traefik.http.routers.privatebin.service=privatebin"
+      - "traefik.http.services.privatebin.loadbalancer.server.port=8080"
+
+  hedgedoc_db:
+    image: postgres:13.4-alpine
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=hedgedoc
+      - POSTGRES_DB=hedgedoc
+    env_file:
+      - .hedgedoc.env
+    volumes:
+      - ./hedgedoc/db:/var/lib/postgresql/data
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=false"
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "hedgedoc" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  hedgedoc:
+    image: quay.io/hedgedoc/hedgedoc:latest
+    restart: unless-stopped
+    env_file:
+      - .hedgedoc.env
+    environment:
+      - "CMD_DOMAIN=hedgedoc.${BASE_DOMAIN:-ozeliurs.com}"
+      - "CMD_PROTOCOL_USESSL=true"
+      - "CMD_URL_ADDPORT=false"
+      - "CMD_EMAIL=true"
+    volumes:
+      - ./hedgedoc/uploads:/hedgedoc/public/uploads
+    depends_on:
+      hedgedoc_db:
+        condition: service_healthy
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.hedgedoc.rule=Host(`hedgedoc.${BASE_DOMAIN:-ozeliurs.com}`)"
+      - "traefik.http.routers.hedgedoc.entrypoints=websecure"
+      - "traefik.http.routers.hedgedoc.tls=true"
+      - "traefik.http.routers.hedgedoc.tls.certresolver=cloudflare"
+
+
+networks:
+  traefik:
+    external: true
