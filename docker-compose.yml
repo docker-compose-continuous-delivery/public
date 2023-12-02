@@ -18,6 +18,8 @@ services:
       - "traefik.http.routers.privatebin.tls.certresolver=cloudflare"
       - "traefik.http.routers.privatebin.service=privatebin"
       - "traefik.http.services.privatebin.loadbalancer.server.port=8080"
+
+      - "com.centurylinklabs.watchtower.enable=true"
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080"]
       interval: 10s
@@ -25,7 +27,7 @@ services:
       retries: 5
 
   hedgedoc_db:
-    image: postgres:13.4-alpine
+    image: postgres:13-alpine
     restart: unless-stopped
     container_name: hedgedoc_db
     environment:
@@ -39,6 +41,8 @@ services:
       - traefik
     labels:
       - "traefik.enable=false"
+
+      - "com.centurylinklabs.watchtower.enable=true"
     healthcheck:
       test: [ "CMD", "pg_isready", "-U", "hedgedoc" ]
       interval: 10s
@@ -69,6 +73,8 @@ services:
       - "traefik.http.routers.hedgedoc.entrypoints=websecure"
       - "traefik.http.routers.hedgedoc.tls=true"
       - "traefik.http.routers.hedgedoc.tls.certresolver=cloudflare"
+
+      - "com.centurylinklabs.watchtower.enable=true"
 
 
 networks:
